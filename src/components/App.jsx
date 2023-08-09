@@ -1,65 +1,79 @@
-import React, { useState } from 'react';
-import Statistics from '../components/Statistics/Statistics';
-import FeedbackOptions from './FeedbackOptions/FeedbackOptions';
-import Section from './Section/Section';
-import Notification from './Notification/Notification';
+import React, { useEffect, useState } from 'react';
+import ContactForm from './ContactForm/ContactForm';
+import ContactList from './Contactlist/Contactlist';
+import Filter from './Filter/Filter';
+import { nanoid } from 'nanoid';
 
-function App() {
-  const [good, setGood] = useState(0);
-  const [neutral, setNeutral] = useState(0);
-  const [bad, setBad] = useState(0);
+export function App() {
+  const [contacts, setContacts] = useState([
+    { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+    { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+    { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+    { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+  ]);
 
-  const handleFeedback = name => {
-    switch (name) {
-      case 'good':
-        setGood(prevGood => prevGood + 1);
-        break;
-      case 'neutral':
-        setNeutral(prevNeutral => prevNeutral + 1);
-        break;
-      case 'bad':
-        setBad(prevBad => prevBad + 1);
-        break;
+  const [searchQuery, setSearchQuery] = useState('');
 
-      default:
-        break;
+  useEffect(() => {
+    const contact = localStorage.getItem('contacts');
+    const parsedContacts = JSON.parse(contact);
+
+    if (parsedContacts) {
+      setContacts(parsedContacts);
     }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const addContact = data => {
+    const finedNumber = contacts.find(
+      contact => contact.number.toLowerCase() === data.number.toLowerCase()
+    );
+
+    if (finedNumber) {
+      alert(
+        `In your phoneBook already have this number his name is ${finedNumber.name}`
+      );
+      return;
+    }
+
+    const newContact = {
+      ...data,
+      id: nanoid(),
+    };
+
+    setContacts(prevContacts => [...prevContacts, newContact]);
   };
 
-  const countTotalFeedback = () => {
-    return good + neutral + bad;
+  const onChange = ({ target }) => {
+    const { value } = target;
+    const normalizedValue = value.toLowerCase().trim();
+    setSearchQuery(normalizedValue);
   };
 
-  const countPositiveFeedbackPercentage = () => {
-    const totalFeedbacks = countTotalFeedback();
-    return totalFeedbacks === 0 ? 0 : Math.round((good / totalFeedbacks) * 100);
+  const getFilteredContacts = () => {
+    const normalizedFilter = searchQuery.toLowerCase().trim();
+    return contacts.filter(({ name }) =>
+      name.toLowerCase().includes(normalizedFilter)
+    );
   };
 
-  const totalFeedbacks = countTotalFeedback();
-  const positivePercentage = countPositiveFeedbackPercentage();
-  const options = ['good', 'neutral', 'bad'];
+  const deliteElement = id => {
+    setContacts(prevContacts =>
+      prevContacts.filter(contact => contact.id !== id)
+    );
+  };
 
   return (
     <>
-      <Section title="Please leave feedback">
-        <FeedbackOptions options={options} onLeaveFeedback={handleFeedback} />
-      </Section>
-
-      {totalFeedbacks > 0 ? (
-        <Section title="Statistics">
-          <Statistics
-            good={good}
-            neutral={neutral}
-            bad={bad}
-            total={totalFeedbacks}
-            positivePercentage={positivePercentage}
-          />
-        </Section>
-      ) : (
-        <Notification message="There is no feedback" />
-      )}
+      <ContactForm addContact={addContact} />
+      <Filter onChange={onChange} searchQuery={searchQuery} />
+      <ContactList
+        contacts={getFilteredContacts()}
+        deliteElement={deliteElement}
+      />
     </>
   );
 }
-
-export default App;
