@@ -4,6 +4,10 @@ import ContactList from './Contactlist/Contactlist';
 import Filter from './Filter/Filter';
 import { nanoid } from 'nanoid';
 
+import ContactContext from 'context';
+
+
+
 export function App() {
   // const [contacts, setContacts] = useState();
 
@@ -65,14 +69,14 @@ export function App() {
   };
 
   return (
-    <>
+    <ContactContext.Provider value={{ deliteElement }}>
       <ContactForm addContact={addContact} />
       <Filter onChange={onChange} searchQuery={searchQuery} />
       <ContactList
         contacts={getFilteredContacts()}
-        deliteElement={deliteElement}
+
       />
-    </>
+    </ContactContext.Provider>
   );
 }
 
